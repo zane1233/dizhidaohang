@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>导航助手</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f5f5;min-height:100vh}
+
+        .top{background:linear-gradient(135deg,#ff6b35,#f7931e);padding:22px 16px 18px;text-align:center;color:#fff}
+        .top h1{font-size:24px;font-weight:700;margin-bottom:4px}
+        .top p{font-size:13px;opacity:.88}
+
+        .body{padding:14px}
+
+        .guide{background:#fff8f0;border:1.5px solid #ffe0b2;border-radius:14px;padding:14px 16px;margin-bottom:14px}
+        .guide h3{color:#e65100;font-size:15px;margin-bottom:10px}
+        .guide-row{display:flex;align-items:flex-start;font-size:14px;color:#555;margin-bottom:7px;line-height:1.5}
+        .gn{background:#ff6b35;color:#fff;border-radius:50%;min-width:20px;height:20px;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-right:8px;margin-top:1px;flex-shrink:0}
+
+        .card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.07);margin-bottom:14px}
+        .card-title{font-size:17px;font-weight:700;color:#222;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+
+        .paste-box{width:100%;min-height:160px;padding:14px;border:2px dashed #e0e0e0;border-radius:12px;font-size:16px;font-family:inherit;color:#333;resize:none;background:#fafafa;line-height:1.7;transition:border-color .3s}
+        .paste-box:focus{outline:none;border-color:#ff6b35;background:#fff}
+
+        .clear-btn{margin-top:10px;padding:8px 18px;background:#f5f5f5;border:none;border-radius:8px;font-size:14px;color:#888;cursor:pointer}
+
+        .results{display:none;margin-top:4px}
+        .results.show{display:block}
+        .results-label{font-size:14px;color:#ff6b35;font-weight:600;margin-bottom:10px}
+
+        .addr-card{background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(0,0,0,.07);border-left:5px solid #ff6b35}
+        .addr-no{font-size:12px;color:#ff6b35;font-weight:600;margin-bottom:5px}
+        .addr-name{font-size:20px;font-weight:700;color:#111;margin-bottom:8px;line-height:1.4}
+        .addr-meta{font-size:13px;color:#888;line-height:1.8;margin-bottom:12px}
+
+        .btn-row{display:flex;gap:8px}
+        .btn-copy{flex:1;padding:13px 0;background:#f5f5f5;border:none;border-radius:10px;font-size:15px;font-weight:600;color:#555;cursor:pointer;transition:all .2s}
+        .btn-copy.ok{background:#e8f5e9;color:#2e7d32}
+
+        .btn-nav{flex:2.5;padding:13px 0;background:linear-gradient(135deg,#ff6b35,#f7931e);border:none;border-radius:10px;font-size:16px;font-weight:700;color:#fff;cursor:pointer;box-shadow:0 4px 12px rgba(255,107,53,.35);display:flex;align-items:center;justify-content:center;gap:6px}
+        .btn-nav:active{opacity:.85;transform:scale(.98)}
+        .btn-nav.loading{opacity:.7;pointer-events:none}
+
+        .nav-spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
+        .btn-nav.loading .nav-spinner{display:block}
+
+        .empty{text-align:center;padding:30px 0;color:#bbb;font-size:15px;display:none}
+        .empty.show{display:block}
+
+        .err{background:#fff3f3;border-left:4px solid #f44336;border-radius:10px;padding:12px 14px;font-size:14px;color:#c62828;margin-top:10px;display:none}
+        .err.show{display:block}
+
+        /* 提示弹窗 */
+        .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#fff;padding:10px 22px;border-radius:24px;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;z-index:999}
+        .toast.show{opacity:1}
+
+        /* 最终说明条 */
+        .notice{background:#e3f2fd;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#1565c0;line-height:1.6;border-left:4px solid #2196f3}
+        .notice b{color:#0d47a1}
+
+        .footer{text-align:center;font-size:12px;color:#bbb;padding:10px 0 24px}
+    </style>
+</head>
+<body>
+
+<div class="top">
+    <h1>🏠 家政导航助手</h1>
+    <p>粘贴任务文字 → 自动识别 → 一键导航</p>
+</div>
+
+<div class="body">
+
+    <div class="guide">
+        <h3>📖 怎么用（3步搞定）</h3>
+        <div class="guide-row"><span class="gn">1</span><span>长按微信里的<b>任务文字</b>，点<b>复制</b></span></div>
+        <div class="guide-row"><span class="gn">2</span><span>回到这里，<b>长按下面的框</b>，点<b>粘贴</b></span></div>
+        <div class="guide-row"><span class="gn">3</span><span>点橙色 <b>🧭 立即导航</b>，高德地图自动打开，再点一次<b>"开始导航"</b>出发！</span></div>
+    </div>
+
+    <!-- 重要说明 -->
+    <div class="notice">
+        ℹ️ <b>关于导航跳转说明：</b><br>
+        点"立即导航"后会自动打开高德地图，并显示<b>路线规划页面</b>（目的地已自动填好）。<br>
+        由于高德地图安全限制，需在高德里再点一次<b>"开始导航"</b>才能出发，这是所有地图APP的规定，无法跳过。
+    </div>
+
+    <div class="card">
+        <div class="card-title">📋 在这里粘贴任务内容</div>
+        <textarea class="paste-box" id="txt"
+            placeholder="长按这里 → 粘贴&#10;&#10;内容粘贴后自动识别所有地址 😊&#10;&#10;支持格式：&#10;• 地址：河西区 兰江新苑&#10;• 河西区 喜年广场，日常2小时&#10;• 明天10点，东丽区 润园..."></textarea>
+        <button class="clear-btn" onclick="clearAll()">✕ 清空重来</button>
+        <div class="err" id="err"></div>
+    </div>
+
+    <div class="results" id="results">
+        <div class="results-label" id="rlabel"></div>
+        <div id="addrList"></div>
+    </div>
+
+    <div class="empty" id="empty">未识别到地址，请确认文字中有具体地点</div>
+    <div class="footer">导航助手 · 免费使用</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    let addrs = [];
+    // 高德地图Web服务Key（免费，用于地址转坐标）
+    // 这里用的是高德官方开放的免费Web API
+    const AMAP_KEY = 'f016c324446cdc91ea3297560d1d5925'; // 公开演示key
+
+    const txt = document.getElementById('txt');
+    txt.addEventListener('input', function(){
+        clearTimeout(txt._t);
+        const val = this.value.trim();
+        if(!val){ clearResults(); return; }
+        txt._t = setTimeout(()=>run(val), 400);
+    });
+
+    function run(content){
+        addrs = parse(content);
+        render(addrs);
+    }
+
+    // -------- 地址解析 --------
+    function parse(text){
+        const res = [];
+        const blocks = text.split(/(?=\n?[0-9１２３４５６７８９]+[、.．)\s]|\n?(?:明天|今天|后天|明日))/);
+        for(let b of blocks){
+            if(!b.trim()) continue;
+            const addr = findAddr(b);
+            if(!addr) continue;
+            res.push({ address:addr, time:findTime(b), project:findProject(b), pay:findPay(b), lat:null, lng:null });
+        }
+        if(!res.length){
+            for(let line of text.split('\n')){
+                const a = findAddr(line);
+                if(a && !res.find(r=>r.address===a))
+                    res.push({address:a,time:'',project:'',pay:'',lat:null,lng:null});
+            }
+        }
+        return res;
+    }
+
+    function findAddr(t){
+        const ps=[
+            /地址[：:]\s*([^\n，,。！!？?]+)/,
+            /([^\s，,。\n]{1,6}(?:区|县)\s{0,2}[^\s，,。\n]{2,}(?:广场|大厦|小区|公寓|花园|中心|大街|路|街|园|城|苑|府|居|庭|里|村|店|院|楼|馆|场|站|桥|坊|巷|弄|新苑|花苑|名苑|豪庭|御苑|家园|山庄|华府|翠庭|丽景|嘉园|康城|美苑|翠苑|玫瑰|星河|金地|碧桂|保利|万科|恒大|绿地|龙湖)[^\s，,。\n！!？?]*)/,
+            /([^\s，,。\n]{1,6}(?:区|县)[^\s，,。\n！!？?]{1,15}(?:路|街|道)[^\s，,。\n！!？?]{0,10})/,
+            /([\u4e00-\u9fa5]{2,8}(?:广场|大厦|小区|公寓|花园|中心|园区|城市|苑|商场|大楼|酒店|医院|市场|超市|新苑|花苑|名苑|家园|山庄))/,
+            /([\u4e00-\u9fa5]{2,6}(?:路|街|大道|大街)\d{1,4}号?)/
+        ];
+        for(let p of ps){
+            const m=t.match(p);
+            if(m){ let a=m[1].trim().replace(/[，,。！!？?\s]+$/,''); if(a.length>=3) return a; }
+        }
+        return null;
+    }
+    function findTime(t){ const m=t.match(/(\d{4}[-\/]\d{1,2}[-\/]\d{1,2}[^\n，,]{0,6}|\d{1,2}月\d{1,2}[日号][^\n，,]{0,6}|(?:上午|下午|早上|中午|晚上)[^\n，,]{0,10}|\d{1,2}[点:：]\d{0,2}(?:分)?|时间[：:][^\n，,]{1,20})/); return m?m[0].trim():''; }
+    function findProject(t){ const m=t.match(/((?:日常|深度|开荒|标准|精细)[^，,\n！!]{0,10}|保洁[^，,\n！!]{0,8}|\d+\s*小时[^，,\n！!]{0,8}|项目[：:][^，,\n]{1,15})/); return m?m[0].trim():''; }
+    function findPay(t){ const m=t.match(/(到手[：:]\s*[\d+×x\*]+\s*元?|[\d+]+\s*元(?!\d)|¥\s*[\d+]+)/); return m?m[0].trim():''; }
+
+    // -------- 渲染 --------
+    function render(list){
+        const sec=document.getElementById('results');
+        const empty=document.getElementById('empty');
+        const lbl=document.getElementById('rlabel');
+        const box=document.getElementById('addrList');
+        if(!list.length){ sec.classList.remove('show'); empty.classList.add('show'); return; }
+        empty.classList.remove('show');
+        lbl.textContent=`✅ 识别到 ${list.length} 个地址，点橙色按钮导航 👇`;
+        box.innerHTML='';
+        list.forEach((item,i)=>{
+            let meta='';
+            if(item.time)    meta+=`⏰ ${item.time}　`;
+            if(item.project) meta+=`📋 ${item.project}　`;
+            if(item.pay)     meta+=`💰 ${item.pay}`;
+            const d=document.createElement('div');
+            d.className='addr-card';
+            d.innerHTML=`
+                <div class="addr-no">第 ${i+1} 个地址</div>
+                <div class="addr-name">📍 ${item.address}</div>
+                ${meta?`<div class="addr-meta">${meta.trim()}</div>`:''}
+                <div class="btn-row">
+                    <button class="btn-copy" id="cp${i}" onclick="copyAddr(${i})">📋 复制地址</button>
+                    <button class="btn-nav" id="nav${i}" onclick="navTo(${i})">
+                        <div class="nav-spinner" id="sp${i}"></div>
+                        <span id="navtxt${i}">🧭 立即导航</span>
+                    </button>
+                </div>`;
+            box.appendChild(d);
+        });
+        sec.classList.add('show');
+        sec.scrollIntoView({behavior:'smooth',block:'start'});
+    }
+
+    // -------- 导航核心逻辑 --------
+    async function navTo(i){
+        const item = addrs[i];
+        const btn  = document.getElementById('nav'+i);
+        const sp   = document.getElementById('sp'+i);
+        const tx   = document.getElementById('navtxt'+i);
+
+        // 显示加载状态
+        btn.classList.add('loading');
+        sp.style.display='block';
+        tx.textContent='定位中...';
+
+        try {
+            // 第一步：用高德地理编码API把地址转成坐标
+            const coords = await geocode(item.address);
+
+            if(coords){
+                // 有坐标：直接用坐标跳转，体验最好（直接显示路线规划页）
+                const {lng, lat} = coords;
+                const ua = navigator.userAgent.toLowerCase();
+                let url;
+                if(/iphone|ipad|ipod/.test(ua)){
+                    // iOS：用iosamap scheme
+                    url = `iosamap://path?sourceApplication=nav&dlat=${lat}&dlon=${lng}&dname=${encodeURIComponent(item.address)}&dev=0&t=0`;
+                } else {
+                    // 安卓：用androidamap scheme
+                    url = `androidamap://route/plan/?sourceApplication=nav&dlat=${lat}&dlon=${lng}&dname=${encodeURIComponent(item.address)}&dev=0&t=0`;
+                }
+                // 先尝试APP scheme，失败就用网页版
+                tryOpenApp(url, lng, lat, item.address);
+            } else {
+                // 无坐标：直接用地址文字跳转
+                fallbackNav(item.address);
+            }
+        } catch(e) {
+            fallbackNav(item.address);
+        } finally {
+            btn.classList.remove('loading');
+            sp.style.display='none';
+            tx.textContent='🧭 立即导航';
+        }
+    }
+
+    // 地址转坐标（高德地理编码）
+    async function geocode(address){
+        try {
+            // 使用高德 Web API 地理编码
+            const url = `https://restapi.amap.com/v3/geocode/geo?address=${encodeURIComponent(address)}&key=${AMAP_KEY}&output=json`;
+            const res = await fetch(url);
+            const data = await res.json();
+            if(data.status==='1' && data.geocodes && data.geocodes.length>0){
+                const loc = data.geocodes[0].location; // "经度,纬度"
+                const [lng, lat] = loc.split(',').map(Number);
+                return {lng, lat};
+            }
+        } catch(e){}
+        return null;
+    }
+
+    // 尝试唤起APP，失败则用网页
+    function tryOpenApp(appUrl, lng, lat, address){
+        // 记录时间，如果1.5秒后还在页面说明APP没安装
+        const start = Date.now();
+        window.location.href = appUrl;
+        setTimeout(()=>{
+            // 如果页面还在（APP未安装或唤起失败）
+            if(Date.now() - start < 2500){
+                fallbackNav(address, lng, lat);
+            }
+        }, 1500);
+    }
+
+    // 降级方案：用高德网页版（带坐标）
+    function fallbackNav(address, lng, lat){
+        let url;
+        if(lng && lat){
+            url = `https://uri.amap.com/navigation?to=${lng},${lat},${encodeURIComponent(address)}&mode=car&policy=1&coordinate=gaode&callnative=1`;
+        } else {
+            url = `https://uri.amap.com/navigation?to=${encodeURIComponent(address)}&mode=car&policy=1&coordinate=gaode&callnative=1`;
+        }
+        window.location.href = url;
+    }
+
+    // -------- 复制地址 --------
+    function copyAddr(i){
+        const a=addrs[i].address;
+        const btn=document.getElementById('cp'+i);
+        const write=()=>{ btn.textContent='✓ 已复制'; btn.classList.add('ok'); setTimeout(()=>{btn.textContent='📋 复制地址';btn.classList.remove('ok');},2000); };
+        if(navigator.clipboard){ navigator.clipboard.writeText(a).then(write).catch(()=>fallbackCopy(a,write)); }
+        else fallbackCopy(a,write);
+    }
+    function fallbackCopy(text,cb){ const ta=document.createElement('textarea'); ta.value=text; ta.style.cssText='position:fixed;opacity:0'; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');cb();}catch(e){} document.body.removeChild(ta); }
+
+    function clearAll(){ document.getElementById('txt').value=''; clearResults(); }
+    function clearResults(){ document.getElementById('results').classList.remove('show'); document.getElementById('empty').classList.remove('show'); document.getElementById('err').classList.remove('show'); document.getElementById('addrList').innerHTML=''; addrs=[]; }
+
+    function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+</script>
+</body>
+</html>
